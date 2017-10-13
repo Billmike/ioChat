@@ -3,6 +3,7 @@ const app = express();
 const server = require('http').createServer(app);
 const io = require('socket.io').listen(server);
 
+var connections = {};
 users = [];
 connections = [];
 
@@ -12,16 +13,16 @@ console.log('Server is presently running....');
 
 app.get('/', (req, res) => res.sendFile(__dirname + '/index.html'));
 
+
 io.sockets.on('connection', (socket) => {
-    connections.push(socket);
     console.log('Connected: %s connection(s) currently active.', connections.length);
 
     // Disconnect
     socket.on('disconnect', (data) => {
         if (!socket.username) return;
-        users.splice(users.indexOf(socket.username), 1);
+        delete connections[socket.username];
         updateUsername();
-        connections.splice(connections.indexOf(socket), 1);
+        delete users[socket.username];
         console.log('Disconnected: %s connection(s) currently active.', connections.length);
     });
     // Message
@@ -34,8 +35,19 @@ io.sockets.on('connection', (socket) => {
         callback(true);
         socket.username = data;
         users.push(socket.username);
+        connections[socket.username] = socket;
         updateUsername();
     });
+
+    socket.on('private message', (data) => {
+      var user = data[0];
+      var message = data[1];
+      if(user in connections){
+        connections[user].emit("private message", [user, message]);
+      }else{
+        socket.emit("error-msg", "User " + user + " does not exist!");
+      }
+    })
 
     function updateUsername() {
         io.sockets.emit('get users', users);

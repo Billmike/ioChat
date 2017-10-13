@@ -45,13 +45,14 @@
                             <label>Enter Message:</label>
                             <textarea class="form-control" id="message"></textarea>
                             <br>
-                            <input type="submit" class="btn btn-primary" value="Send message">
+                            <input type="submit" class="btn btn-primary" id="send-btn" value="Send message">
                         </div>
                     </form>
                 </div>
             </div>
         </div>
     <script>
+        var messaging = undefined;
         $(function(){
             var socket = io.connect();
             var $messageForm = $('#messageForm');
@@ -65,13 +66,27 @@
 
             $messageForm.submit((e) => {
                 e.preventDefault();
-                socket.emit('send message', $message.val());
+                if(messaging == undefined){
+                  socket.emit('send message', $message.val());
+                }else{
+                  socket.emit('private message', [messaging, $message.val()]);
+                  $chat.append('<div class="well"><strong>[you -> ' + messaging + ']' + ': </strong><i>' + $message.val());
+                  messaging = undefined;
+                  $('#send-btn')[0].value = "Send message";
+                }
                 $message.val('');
             });
 
             socket.on('new message', (data) => {
                 $chat.append('<div class="well"> <strong> ' + data.user + '</strong>: ' + data.msg + '</div>')
             });
+            socket.on('private message', (data) => {
+              $chat.append('<div class="well"><strong>[' + data[0] + ' -> you]' + ': </strong><i>' + data[1]);
+            })
+            socket.on('error-msg', (data) => {
+              console.log("Error! " + data);
+              $chat.append('<div class="well"><strong style="color:red">Error! ' + data + '</strong>');
+            })
 
             $userForm.submit((e) => {
                 e.preventDefault();
@@ -87,11 +102,15 @@
             socket.on('get users',  (data) => {
                 var html = '';
                 for (i = 0; i < data.length; i++){
-                    html += '<li class="list-group-items">'+ data[i] + '</li>';
+                    html += '<li class="list-group-items"><a href="#" onclick="message(\'' + data[i] + '\')">'+ data[i] + '</a></li>';
                 }
                 $users.html(html);
             })
         });
+        function message(user){
+            messaging = user;
+            $('#send-btn')[0].value = "Send private message (" + user + ")";
+        }
     </script>
     </body>
 </html>

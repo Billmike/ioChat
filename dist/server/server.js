@@ -19,10 +19,10 @@ var server = _http2.default.createServer(app);
 var io = new _socket2.default(server);
 var users = [];
 var connections = [];
+var port = process.env.PORT || 3000;
+server.listen(port);
 
-server.listen(process.env.PORT || 3000);
-
-console.log('Server is presently running....');
+console.log('Server is presently running at http://localhost:', port);
 
 app.use(_express2.default['static'](__dirname + '/../client'));
 

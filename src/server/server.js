@@ -9,10 +9,10 @@ const server = http.createServer(app);
 const io = new SocketIO(server);
 let users = [];
 let connections = [];
+const port = process.env.PORT || 3000;
+server.listen(port);
 
-server.listen(process.env.PORT || 3000);
-
-console.log('Server is presently running....');
+console.log('Server is presently running at http://localhost:' + port);
 
 app.use(express['static'](__dirname + '/../client'));
 

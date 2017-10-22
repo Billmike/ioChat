@@ -36,10 +36,15 @@ io.sockets.on('connection', (socket) => {
   // User
 
   socket.on('new user', (data, callback) => {
-    callback(true);
-    socket.username = data;
-    users.push(socket.username);
-    updateUsername();
+    try {
+      socket.username = data;
+      users.push(socket.username);
+      updateUsername();
+      callback(true);
+    } catch (error) {
+      console.log("Create new user Error: ", error);
+      callback(false);
+    }
   });
 
   function updateUsername() {
